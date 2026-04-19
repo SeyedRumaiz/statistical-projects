@@ -1,0 +1,159 @@
+---
+title: "Markov Chain"
+author: "Seyed Rumaiz"
+output: pdf_document
+date: "2026-04-19"
+---
+
+## Markov Chain Model
+
+A discrete-time Markov chain is a stochastic process $\{X_n\}_{n \ge 0}$ that satisfies the Markov property:
+
+$$
+P(X_{n+1} = j \mid X_n = i, X_{n-1}, \dots, X_0)
+= P(X_{n+1} = j \mid X_n = i)
+$$
+
+This means that the future state depends only on the current state.
+
+## Transition Matrix
+
+The system is described by a transition probability matrix $P$:
+
+$$
+P =
+\begin{bmatrix}
+p_{11} & p_{12} & \cdots & p_{1k} \\
+p_{21} & p_{22} & \cdots & p_{2k} \\
+\vdots & \vdots & \ddots & \vdots \\
+p_{k1} & p_{k2} & \cdots & p_{kk}
+\end{bmatrix}
+$$
+
+where
+
+$$
+p_{ij} = P(X_{n+1} = j \mid X_n = i), \quad \sum_{j=1}^{k} p_{ij} = 1
+$$
+
+## State Distribution
+
+Let the initial distribution be:
+
+$$
+\pi^{(0)} = (\pi_1, \pi_2, \dots, \pi_k)
+$$
+
+Then the distribution after one step is:
+
+$$
+\pi^{(1)} = \pi^{(0)} P
+$$
+
+After $n$ steps:
+
+$$
+\pi^{(n)} = \pi^{(0)} P^n
+$$
+
+## Steady-State Distribution
+
+The steady-state (stationary) distribution $\pi$ satisfies:
+
+$$
+\pi P = \pi
+$$
+
+with the constraint:
+
+$$
+\sum_{i=1}^{k} \pi_i = 1
+$$
+
+This is the long-run behaviour of the Markov chain.
+
+## Implementation
+
+Lets implement the Markov Chain with some examples!
+We will use the `markovchain` package, along with the `expm` package for matrix power.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Install packages
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+install.packages("markovchain")
+install.packages("expm")
+```
+
+```{r}
+# Load libraries
+library(markovchain)
+library(expm)
+```
+
+```{r}
+# Define transition matrix
+states <- c("Sunny","Cloudy","Rainy")
+
+transitionMatrix <- matrix(c(
+  0.7,0.2,0.1,
+  0.3,0.4,0.3,
+  0.2,0.3,0.5),
+  nrow=3, byrow=TRUE)
+
+transitionMatrix
+```
+
+```{r}
+# Create a Markov Chain object
+weatherMC <- new("markovchain",
+                 states = states,
+                 transitionMatrix = transitionMatrix,
+                 name = "Weather")
+
+weatherMC
+```
+
+```{r}
+# Predict next state probabilities
+initialState <- c(1,0,0)  # Sunny
+
+nextDay <- initialState %*% transitionMatrix
+nextDay
+```
+
+```{r}
+# Weather after 3 days
+transitionMatrix3 <- transitionMatrix %^% 3
+transitionMatrix3
+```
+
+```{r}
+# Long run probabilities
+steadyStates(weatherMC)
+```
+
+```{r}
+# Simulate a Markov Chain sequence (generate weather for 10 days)
+set.seed(123)
+weatherSimulation <- rmarkovchain(n=10, object=weatherMC, t0="Sunny")
+weatherSimulation
+```
+
+```{r}
+# Plot the Markov Chain
+plot(weatherMC)
+```
+
+```{r}
+# Find the probability after 2 steps starting from Rainy
+initial <- c(0,0,1)   # Rainy
+
+P2 <- transitionMatrix %^% 2
+
+result <- initial %*% P2
+result
+```
