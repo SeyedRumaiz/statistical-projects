@@ -1,0 +1,111 @@
+---
+title: "Maximum Likelihood Estimation (MLE)"
+author: "Seyed Rumaiz"
+date: "2026-04-20"
+output: pdf_document
+---
+
+The likelihood function is defined as:
+
+$$
+L(\theta) = \prod_{i=1}^{n} f(x_i \mid \theta)
+$$
+
+The log-likelihood is:
+
+$$
+\ell(\theta) = \sum_{i=1}^{n} \log f(x_i \mid \theta)
+$$
+
+The Maximum Likelihood Estimator is:
+
+$$
+\hat{\theta} = \arg\max_{\theta} \ell(\theta)
+$$
+
+
+Lets see how we can implement this...
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Simulate some data
+set.seed(123)
+data <- rnorm(100, mean = 5, sd = 2)
+```
+
+```{r}
+# log-likelihood function
+log_likelihood <- function(params) {
+  mu <- params[1]
+  sigma <- params[2]
+  
+  if (sigma <= 0) return(-Inf)
+  
+  ll <- sum(dnorm(data, mean = mu, sd = sigma, log = TRUE))
+  return(ll)
+}
+```
+
+```{r}
+# Optimisation (MLE)
+result <- optim(
+  par = c(0, 1), # Initial guesses
+  fn = function(p) -log_likelihood(p),  # Minimize negative log-likelihood
+  method = "L-BFGS-B",
+  lower = c(-Inf, 0.0001)
+)
+
+result$par
+```
+
+```{r}
+# Extract MLE estimates
+mu_hat <- result$par[1]
+sigma_hat <- result$par[2]
+
+mu_hat
+sigma_hat
+```
+
+```{r}
+# MLE estimates for normal distribution
+mean(data)
+sd(data)
+```
+
+$$
+f(x \mid \lambda) = \lambda e^{-\lambda x}
+$$
+
+```{r}
+exp_loglik <- function(lambda) {
+  if (lambda <= 0) return(-Inf)
+  
+  sum(dexp(data, rate = lambda, log = TRUE))
+}
+```
+
+```{r}
+# MLE estimation
+result_exp <- optim(
+  par = 1,
+  fn = function(l) -exp_loglik(l),
+  method = "L-BFGS-B",
+  lower = 0.0001
+)
+
+lambda_hat <- result_exp$par
+lambda_hat
+```
+
+$$
+\hat{\lambda} = \frac{1}{\bar{x}}
+$$
+
+```{r}
+# Theoretical MLE check
+1 / mean(data)
+```
